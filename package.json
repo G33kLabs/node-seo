@@ -1,0 +1,31 @@
+{
+  "name": "NodeSEO",
+  "version": "0.0.1",
+
+  "description": "A crawler in nodejs with plugins to detect problems with SEO on a website as title or description in doublon, 404 errors... | G33k Labs",
+
+  "dependencies": {
+    "async":     "x.x.x",
+    "underscore": "x.x.x",
+    "backbone": "x.x.x",
+    "moment": "x.x.x",
+    "logger": "x.x.x",
+    "colors": "x.x.x",
+    "mkdirp": "x.x.x",
+    "mysql": "x.x.x",
+    "request": "x.x.x",
+    "ua-parser": "x.x.x",
+    "commander": "x.x.x",
+    "mysql": "x.x.x",
+    "findit": "x.x.x",
+    "jquery": "x.x.x",
+    "validator": "x.x.x"
+  },
+
+  "main": "app.js",
+
+  "engines": {
+    "node": ">= 0.8.0"
+  }
+
+}

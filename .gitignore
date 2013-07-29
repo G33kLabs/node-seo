@@ -1,0 +1,7 @@
+node_modules/*
+.DS_Store
+Procfile
+
+app/config/dev.trader-forex.json
+
+app/config/kodomo.trader-forex.json
