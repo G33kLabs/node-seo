@@ -2,11 +2,14 @@ var sanitize = require('validator').sanitize;
 module.exports = function($el) {
 
 	// Init datas and links container
-	var datas = {};
-	datas.links = datas.links || [];
+	var datas = [];
+
+	// Get robots metas
+	var meta_robots = $el.find('meta[name="robots"]').attr('content'); 
+	var robots_nofollow = /nofollow/.test(meta_robots) ? true : false;
 
 	// Get all links
-	$el.find('a').each(function() {
+	$el.find('a,link[rel="prev"],link[rel="next"]').each(function() {
 
 		// Prepapre link to add
 		var link = {
@@ -16,8 +19,11 @@ module.exports = function($el) {
 			html: sanitize(this.innerHTML).trim()
 		}; 
 
+		// Get relative url if internal
+		link.href = link.href.replace($el.baseUrl, '');
+
 		// If link has a nofollow reference
-		if ( this.getAttribute("rel") == 'nofollow' ) {
+		if ( this.getAttribute("rel") == 'nofollow' || robots_nofollow ) {
 			link.nofollow = true;
 		}
 
@@ -27,8 +33,13 @@ module.exports = function($el) {
 		}
 
 		// If link is an image
-		else if ( /(jpg|png|gif)$/i.test(link.href) ) {
+		else if ( /(jpg|png|gif|pdf|zip|tar|gz|swf|flv|mp3|wav|mp4)$/i.test(link.href) ) {
 			link.asset = true;
+		}
+
+		// If link is an image
+		else if ( /^\/forum/i.test(link.href) ) {
+			link.ignore = true;
 		}
 
 		// Prepend site url if internal link
@@ -43,7 +54,7 @@ module.exports = function($el) {
 		}
 
 		// Add link to returned links
-		datas.links.push(link); 
+		datas.push(link); 
 
 	})
 

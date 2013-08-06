@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- Client: localhost
--- Généré le: Lun 29 Juillet 2013 à 19:01
+-- Généré le: Sam 03 Août 2013 à 02:42
 -- Version du serveur: 5.5.29
 -- Version de PHP: 5.4.11
 
@@ -34,8 +34,9 @@ CREATE TABLE IF NOT EXISTS `seo_crawl` (
   `meta_title` text,
   `meta_desc` text,
   `meta_keywords` text,
-  `meta_noindex` varchar(254) DEFAULT NULL,
-  `meta_thumb` varchar(254) DEFAULT NULL,
+  `meta_noindex` tinyint(1) DEFAULT NULL,
+  `meta_nofollow` tinyint(1) DEFAULT NULL,
+  `plugins` mediumtext,
   `referer` varchar(254) DEFAULT NULL,
   `created_at` datetime DEFAULT NULL,
   `crawled_at` datetime DEFAULT NULL,
@@ -43,7 +44,6 @@ CREATE TABLE IF NOT EXISTS `seo_crawl` (
   KEY `status_code` (`status_code`),
   KEY `load_time` (`load_time`),
   KEY `crawled_at` (`crawled_at`),
-  KEY `meta_thumb` (`meta_thumb`),
   KEY `meta_robots` (`meta_noindex`),
   KEY `created_at` (`created_at`),
   KEY `meta_canonical` (`meta_canonical`),

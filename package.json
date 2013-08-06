@@ -22,7 +22,7 @@
     "validator": "x.x.x"
   },
 
-  "main": "app.js",
+  "main": "app/crawler/index.js",
 
   "engines": {
     "node": ">= 0.8.0"

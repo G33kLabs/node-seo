@@ -24,8 +24,6 @@ var cluster = require('cluster') ;
 exports.log = function(obj, color) { 
     color = color || 'green'; 
 
-    //console.log(cluster.worker.id) ;
-
     // -- Trim and transform object to json
     obj = exports.trim((typeof obj == 'string' ) ? obj : json(obj, null, 4)) ;
 
@@ -38,7 +36,6 @@ exports.log = function(obj, color) {
     }
 
     // -- Add cluster informations
-    //(cluster&&cluster.worker?cluster.worker.id+' | ':'')+
     if ( typeof cluster != 'undefined' ) {
         var cluster_id = cluster.worker ? cluster.worker.id : 'M' ;
         if ( ! (/\[(.*)\] \d/).test(obj) ) {
@@ -723,81 +720,6 @@ utftext+=enc;start=end=n+1;}}
 if(end>start){utftext+=string.substring(start,string.length);}
 return utftext;}
 
-// -- Sprintf
-// This code is in the public domain. Feel free to link back to http://jan.moesen.nu/
-exports.sprintf = function() {
-    if (!arguments || arguments.length < 1 || !RegExp) {
-        return;
-    }
-
-    var str = arguments[0];
-    var re = /([^%]*)%('.|0|\x20)?(-)?(\d+)?(\.\d+)?(%|b|c|d|u|f|o|s|x|X)(.*)/;
-    var a = b = [], numSubstitutions = 0, numMatches = 0;
-    while (a = re.exec(str)) {
-        var leftpart = a[1], pPad = a[2], pJustify = a[3], pMinLength = a[4];
-        var pPrecision = a[5], pType = a[6], rightPart = a[7];
-
-        numMatches++;
-
-        if (pType == '%') {
-            subst = '%';
-        } else {
-            numSubstitutions++;
-            if (numSubstitutions >= arguments.length) {
-                exports.error('Error! Not enough function arguments (' + (arguments.length - 1) + ', excluding the string)\nfor the number of substitution parameters in string (' + numSubstitutions + ' so far).');
-            }
-
-            var param = arguments[numSubstitutions];
-            var pad = '';
-            if (pPad && pPad.substr(0,1) == "'") {
-                pad = leftpart.substr(1,1);
-            } else if (pPad) {
-                pad = pPad;
-            }
-
-            var justifyRight = true;
-            if (pJustify && pJustify === "-") {
-                justifyRight = false;
-            }
-
-            var minLength = -1;
-            if (pMinLength) {
-                minLength = parseInt(pMinLength);
-            }
-
-            var precision = -1;
-            if (pPrecision && pType == 'f') {
-                precision = parseInt(pPrecision.substring(1));
-            }
-
-            var subst = param;
-            if (pType == 'b') {
-                subst = parseInt(param).toString(2);
-            } else if (pType == 'c') {
-                subst = String.fromCharCode(parseInt(param));
-            } else if (pType == 'd') {
-                subst = parseInt(param) ? parseInt(param) : 0;
-            } else if (pType == 'u') {
-                subst = Math.abs(param);
-            } else if (pType == 'f') {
-                subst = (precision > -1) ? Math.round(parseFloat(param) * Math.pow(10, precision)) / Math.pow(10, precision): parseFloat(param);
-            } else if (pType == 'o') {
-                subst = parseInt(param).toString(8);
-            } else if (pType == 's') {
-                subst = param;
-            } else if (pType == 'x') {
-                subst = ('' + parseInt(param).toString(16)).toLowerCase();
-            } else if (pType == 'X') {
-                subst = ('' + parseInt(param).toString(16)).toUpperCase();
-            }
-        }
-
-        str = leftpart + subst + rightPart;
-    }
-
-    return str;
-}
-
 /*Accepts a Javascript Date object as the parameter;
   outputs an RFC822-formatted datetime string. */
 exports.GetRFC822Date = function (oDate) {
@@ -823,146 +745,6 @@ function padWithZero(val) {
     if (parseInt(val) < 10) return "0" + val;
     return val;
   }
-
-/* accepts the client's time zone offset from GMT in minutes as a parameter.
-  returns the timezone offset in the format [+|-}DDDD */
-function getTZOString(timezoneOffset) {
-    var hours = Math.floor(timezoneOffset/60);
-    var modMin = Math.abs(timezoneOffset%60);
-    var s = new String();
-    s += (hours > 0) ? "-" : "+";
-    var absHours = Math.abs(hours)
-    s += (absHours < 10) ? "0" + absHours :absHours;
-    s += ((modMin == 0) ? "00" : modMin);
-    return(s);
-} ;
-
-/*
- * Date Format 1.2.3
- * (c) 2007-2009 Steven Levithan <stevenlevithan.com>
- * MIT license
- *
- * Includes enhancements by Scott Trenda <scott.trenda.net>
- * and Kris Kowal <cixar.com/~kris.kowal/>
- *
- * Accepts a date, a mask, or a date and a mask.
- * Returns a formatted version of the given date.
- * The date defaults to the current date/time.
- * The mask defaults to dateFormat.masks.default.
- */
-
-var dateFormat = function () {
-  var token = /d{1,4}|m{1,4}|yy(?:yy)?|([HhMsTt])\1?|[LloSZ]|"[^"]*"|'[^']*'/g,
-    timezone = /\b(?:[PMCEA][SDP]T|(?:Pacific|Mountain|Central|Eastern|Atlantic) (?:Standard|Daylight|Prevailing) Time|(?:GMT|UTC)(?:[-+]\d{4})?)\b/g,
-    timezoneClip = /[^-+\dA-Z]/g,
-    pad = function (val, len) {
-      val = String(val);
-      len = len || 2;
-      while (val.length < len) val = "0" + val;
-      return val;
-    };
-
-  // Regexes and supporting functions are cached through closure
-  return function (date, mask, utc) {
-    var dF = dateFormat;
-
-    // You can't provide utc if you skip other args (use the "UTC:" mask prefix)
-    if (arguments.length == 1 && Object.prototype.toString.call(date) == "[object String]" && !/\d/.test(date)) {
-      mask = date;
-      date = undefined;
-    }
-
-    // Passing date through Date applies Date.parse, if necessary
-    date = date ? new Date(date) : new Date;
-    if (isNaN(date)) throw SyntaxError("invalid date");
-
-    mask = String(dF.masks[mask] || mask || dF.masks["default"]);
-
-    // Allow setting the utc argument via the mask
-    if (mask.slice(0, 4) == "UTC:") {
-      mask = mask.slice(4);
-      utc = true;
-    }
-
-    var _ = utc ? "getUTC" : "get",
-      d = date[_ + "Date"](),
-      D = date[_ + "Day"](),
-      m = date[_ + "Month"](),
-      y = date[_ + "FullYear"](),
-      H = date[_ + "Hours"](),
-      M = date[_ + "Minutes"](),
-      s = date[_ + "Seconds"](),
-      L = date[_ + "Milliseconds"](),
-      o = utc ? 0 : date.getTimezoneOffset(),
-      flags = {
-        d:    d,
-        dd:   pad(d),
-        ddd:  dF.i18n.dayNames[D],
-        dddd: dF.i18n.dayNames[D + 7],
-        m:    m + 1,
-        mm:   pad(m + 1),
-        mmm:  dF.i18n.monthNames[m],
-        mmmm: dF.i18n.monthNames[m + 12],
-        yy:   String(y).slice(2),
-        yyyy: y,
-        h:    H % 12 || 12,
-        hh:   pad(H % 12 || 12),
-        H:    H,
-        HH:   pad(H),
-        M:    M,
-        MM:   pad(M),
-        s:    s,
-        ss:   pad(s),
-        l:    pad(L, 3),
-        L:    pad(L > 99 ? Math.round(L / 10) : L),
-        t:    H < 12 ? "a"  : "p",
-        tt:   H < 12 ? "am" : "pm",
-        T:    H < 12 ? "A"  : "P",
-        TT:   H < 12 ? "AM" : "PM",
-        Z:    utc ? "UTC" : (String(date).match(timezone) || [""]).pop().replace(timezoneClip, ""),
-        o:    (o > 0 ? "-" : "+") + pad(Math.floor(Math.abs(o) / 60) * 100 + Math.abs(o) % 60, 4),
-        S:    ["th", "st", "nd", "rd"][d % 10 > 3 ? 0 : (d % 100 - d % 10 != 10) * d % 10]
-      };
-
-    return mask.replace(token, function ($0) {
-      return $0 in flags ? flags[$0] : $0.slice(1, $0.length - 1);
-    });
-  };
-}();
-
-// Some common format strings
-dateFormat.masks = {
-  "default":      "ddd mmm dd yyyy HH:MM:ss",
-  shortDate:      "m/d/yy",
-  mediumDate:     "mmm d, yyyy",
-  longDate:       "mmmm d, yyyy",
-  fullDate:       "dddd, mmmm d, yyyy",
-  shortTime:      "h:MM TT",
-  mediumTime:     "h:MM:ss TT",
-  longTime:       "h:MM:ss TT Z",
-  isoDate:        "yyyy-mm-dd",
-  isoTime:        "HH:MM:ss",
-  isoDateTime:    "yyyy-mm-dd'T'HH:MM:ss",
-  isoUtcDateTime: "UTC:yyyy-mm-dd'T'HH:MM:ss'Z'"
-};
-
-// Internationalization strings
-dateFormat.i18n = {
-  dayNames: [
-    "Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat",
-    "Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"
-  ],
-  monthNames: [
-    "Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec",
-    "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"
-  ]
-};
-
-// For convenience...
-Date.prototype.format = function (mask, utc) {
-  return dateFormat(this, mask, utc);
-};
-
 
 // Declare as a global var : tools
 GLOBAL.tools = exports ;
