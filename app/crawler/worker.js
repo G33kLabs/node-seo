@@ -142,18 +142,6 @@ var datastore = new Datastore(Config, function(err, res) {
 				// Add links
 				datastore.add_queue(links, callback); 
 
-			},
-
-			// Count crawls in queue
-			count_queue: function(callback) {
-				var sql = "SELECT COUNT(url) as current FROM seo_crawl WHERE crawled_at IS NULL";
-				datastore.db.query(sql, callback); 	
-			},
-
-			// Count total crawls
-			count_total: function(callback) {
-				var sql = "SELECT COUNT(url) as total FROM seo_crawl";
-				datastore.db.query(sql, callback); 	
 			}
 		},
 
@@ -161,19 +149,11 @@ var datastore = new Datastore(Config, function(err, res) {
 		function(err, results) {
 			if ( err ) tools.error('Worker response :: '+JSON.stringify(err)) ;
 
-			// Get progress
-			var current = _.first(_.first(results.count_queue)).current;
-			var total = _.first(_.first(results.count_total)).total;
-			var progress = (total-current)*100/total; 
-
 			// Log message
 			tools.log('Complete :: '+crawl.url, 'lcyan'); 
 
 			// Send stats
 			process.send({
-				current: (total-current),
-				total: total,
-				progress: progress,
 				url: crawl.url
 			})
 

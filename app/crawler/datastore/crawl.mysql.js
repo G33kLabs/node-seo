@@ -101,7 +101,7 @@ module.exports = Backbone.Model.extend({
 			_.each(check_links, function(link, url) {
 				var found = _.findWhere(replies, {url: link.url});
 				if ( !found ) {
-					insert_sql.push("INSERT INTO seo_crawl SET url = '"+link.url+"', status_code = 'Crawling', referer = '"+(link.referer?link.referer:'')+"', created_at = NOW() "); 
+					insert_sql.push("INSERT DELAYED INTO seo_crawl SET url = '"+link.url+"', status_code = 'Crawling', referer = '"+(link.referer?link.referer:'')+"', created_at = NOW() "); 
 				}
 			}); 
 
@@ -174,12 +174,16 @@ module.exports = Backbone.Model.extend({
 
 				// Set as crawling
 				var sql = 'UPDATE seo_crawl SET crawled_at = NOW() WHERE url = "'+replies.url+'" LIMIT 1';
-				self.db.query(sql); 
+				self.db.query(sql, function() {
+					callback(err, replies.url?replies:null);
+				}); 
 
 			}
 
 			// Callback
-			callback(err, replies.url?replies:null);
+			else {
+				callback(err, replies.url?replies:null);
+			}
 
 		}); 
 	}

@@ -89,8 +89,54 @@ module.exports = Backbone.Model.extend({
 			// Output ready message
 			tools.log('CrawlerManager is ready !') ;
 
+			// Debug message every 3 seconds
+			setInterval(function() {
+				self.stats() ;
+			}, 3000);
+
 		})
 		
+
+	},
+
+	// Echo stats
+	stats: function() {
+		var self = this;
+
+		// Insert and add links
+		async.series({
+
+			// Count crawls in queue
+			count_queue: function(callback) {
+				var sql = "SELECT COUNT(url) as current FROM seo_crawl WHERE crawled_at IS NOT NULL";
+				self.datastore.db.query(sql, callback); 	
+			},
+
+			// Count total crawls
+			count_total: function(callback) {
+				var sql = "SELECT COUNT(url) as total FROM seo_crawl";
+				self.datastore.db.query(sql, callback); 	
+			}
+		},
+
+		// CLose this process and open another one
+		function(err, results) {
+			if ( err ) tools.error('Worker response :: '+JSON.stringify(err)) ;
+
+			// Get progress
+			var current = _.first(_.first(results.count_queue)).current;
+			var total = _.first(_.first(results.count_total)).total;
+			var progress = (current)*100/total; 
+
+			// Calculate ETA
+			var passed_time = moment() - self.start_time; 
+			var total_time = passed_time*100/progress;
+			var eta = total_time - passed_time; 
+
+			// Log message
+			tools.debug('Running :: '+self.runningProcess+' :: Progress :: '+current+'/'+total+' ('+tools.number_format(progress, 1)+'%) :: ETA :: '+tools.formatTime(eta));
+
+		}) ;
 
 	},
 
@@ -98,12 +144,13 @@ module.exports = Backbone.Model.extend({
 	fork: function() {
 		var self = this;
 
-		self.db = self.datastore.db;
-
 		// Exit if max of processes are running
 		if ( self.runningProcess >= self.maxProcess) {
 			return false;
 		}
+
+		// Count number of running processes
+		self.runningProcess++;
 
 		// Try to find a record in DB to parse
 		self.datastore.getRecord(function(err, replies) {
@@ -112,7 +159,6 @@ module.exports = Backbone.Model.extend({
 			if ( replies ) {
 
 				// Create the worker
-				self.runningProcess++;
 				var currentWorker = cluster.fork({
 					url: replies.url,
 					referer: replies.referer,
@@ -123,29 +169,29 @@ module.exports = Backbone.Model.extend({
 
 				// Restart a new worker if this one ended
 				currentWorker.on('exit', function(code, signal) {
-					//tools.log('Good job worker '+ this.process.pid +' ! ', 'yellow');
-					self.runningProcess--;
-					self.fork() ;					
+//					tools.log('Good job worker '+ this.process.pid +' ! ', 'yellow');
+					//self.runningProcess--;
+//					self.fork() ;					
 				}); 
 
 				// Get message from worker
 				currentWorker.on('message', function(msg) {
 
-					// Calculate ETA
-					var passed_time = moment() - self.start_time; 
-					var total_time = passed_time*100/msg.progress;
-					var eta = total_time - passed_time; 
-
-					// Log message
-					tools.debug('Running :: '+self.runningProcess+' :: Progress :: '+msg.current+'/'+msg.total+' ('+tools.number_format(msg.progress, 1)+'%) :: ETA :: '+tools.formatTime(eta));
-
-					// Kill the worker to launch a new one on another url
+					// Kill worker and Fork a new one
 					currentWorker.process.kill(); 
-
+					self.runningProcess--;
+					process.nextTick(function() {
+						self.fork() ;
+					});					
+					
 				}); 
 
 				// Start another one if possible
-				self.fork() ;			
+				if ( self.runningProcess < self.maxProcess) {
+					process.nextTick(function() {
+						self.fork() ;	
+					});
+				}
 
 			}
 
@@ -158,7 +204,5 @@ module.exports = Backbone.Model.extend({
 		});
 
 	}
-
-
 
 }); 

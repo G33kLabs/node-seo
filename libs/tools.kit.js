@@ -20,7 +20,6 @@ exports.colors = require('./termcolors.js').colors ;
 
 ///////////////////////////////////////////////////////////////////////// CONSOLE LOGGING
 // Log & error functions
-var cluster = require('cluster') ;
 exports.log = function(obj, color) { 
     color = color || 'green'; 
 
@@ -434,7 +433,7 @@ exports.walk = function(dir, done) {
             next();
           });
         } else {
-          results.push({path: file, mtime: stat.mtime, size: stat.size});
+          if ( stat && ! /.DS_Store/.test(file) ) results.push({path: file, mtime: stat.mtime, size: stat.size});
           next();
         }
       });

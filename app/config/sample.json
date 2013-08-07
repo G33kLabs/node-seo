@@ -2,7 +2,7 @@
 	"url": "http://www.yourdomain.com",
 	"auth": null,
 	"clean_db": true,
-	"reset_db": true,
+	"flush": true,
 	"db": {
 		"type": "mysql",
 		"host": "127.0.0.1",

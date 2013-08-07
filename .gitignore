@@ -3,5 +3,5 @@ node_modules/*
 Procfile
 
 app/config/dev.trader-forex.json
-
+tmp/*
 app/config/kodomo.trader-forex.json
